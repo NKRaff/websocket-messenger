@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+  <link rel="stylesheet" href="styles/index.css">
+</head>
+
+<body>
+
+  <div class="chat-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="sidebar-header">
+        Chat
+      </div>
+
+      <input
+        class="search"
+        type="text"
+        placeholder="Pesquisar..."
+      >
+
+      <div class="contacts">
+
+        <div class="contact active">
+          <div class="avatar">AS</div>
+
+          <div class="contact-info">
+            <div class="contact-name">Ana Silva</div>
+            <div class="contact-message">
+              Até mais tarde!
+            </div>
+          </div>
+        </div>
+
+        <div class="contact">
+          <div class="avatar">JM</div>
+
+          <div class="contact-info">
+            <div class="contact-name">João Mendes</div>
+            <div class="contact-message">
+              Você viu aquele projeto?
+            </div>
+          </div>
+        </div>
+
+        <div class="contact">
+          <div class="avatar">MC</div>
+
+          <div class="contact-info">
+            <div class="contact-name">Maria Costa</div>
+            <div class="contact-message">
+              Obrigada!
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- CHAT -->
+    <main class="chat">
+
+      <header class="chat-header">
+        <div class="avatar">AS</div>
+
+        <div>
+          <div class="user-name">Ana Silva</div>
+          <div class="status">● Online</div>
+        </div>
+      </header>
+
+      <section class="messages" id="messages">
+
+        <div class="message received">
+          Oi! Tudo bem?
+          <span class="time">16:20</span>
+        </div>
+
+        <div class="message sent">
+          Oi, Ana! Tudo ótimo 😊
+          <span class="time">16:21</span>
+        </div>
+
+        <div class="message received">
+          Você conseguiu terminar o projeto?
+          <span class="time">16:22</span>
+        </div>
+
+        <div class="message sent">
+          Sim! Terminei agora há pouco.
+          <span class="time">16:23</span>
+        </div>
+
+        <div class="message received">
+          Perfeito! Até mais tarde então!
+          <span class="time">16:24</span>
+        </div>
+
+      </section>
+
+      <div class="message-form">
+
+        <input
+          class="message-input"
+          id="message-input"
+          type="text"
+          placeholder="Digite uma mensagem..."
+        >
+
+        <button class="send-button" id="send-button">
+          ➤
+        </button>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="scripts/chat.js"></script>
+</body>
+</html>

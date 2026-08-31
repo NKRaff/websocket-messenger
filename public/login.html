@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Login - Chat</title>
+
+  <link rel="stylesheet" href="styles/login.css">
+</head>
+
+<body>
+
+  <main class="auth-container">
+
+    <section class="auth-card">
+
+      <div class="logo">
+        Chat
+      </div>
+
+      <div class="auth-header">
+        <h1 id="title">Entrar</h1>
+        <p id="subtitle">Entre para continuar conversando.</p>
+      </div>
+
+      <!-- LOGIN -->
+      <form id="login-form">
+
+        <div class="input-group">
+          <label for="login-name">Nome</label>
+
+          <input
+            id="login-name"
+            type="text"
+            placeholder="Digite seu nome"
+            autocomplete="username"
+            required
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="login-password">Senha</label>
+
+          <input
+            id="login-password"
+            type="password"
+            placeholder="Digite sua senha"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <button class="auth-button" type="submit">
+          Entrar
+        </button>
+
+      </form>
+
+      <!-- CADASTRO -->
+      <form id="register-form" class="hidden">
+
+        <div class="input-group">
+          <label for="register-name">Nome</label>
+
+          <input
+            id="register-name"
+            type="text"
+            placeholder="Digite seu nome"
+            autocomplete="name"
+            required
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="register-password">Senha</label>
+
+          <input
+            id="register-password"
+            type="password"
+            placeholder="Crie uma senha"
+            autocomplete="new-password"
+            required
+          >
+        </div>
+
+        <button class="auth-button" type="submit">
+          Criar conta
+        </button>
+
+      </form>
+
+      <div class="divider">
+        <span>ou</span>
+      </div>
+
+      <div class="switch-auth">
+
+        <span id="switch-text">
+          Ainda não possui uma conta?
+        </span>
+
+        <button id="switch-button" type="button">
+          Cadastre-se
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="scripts/login.js"></script>
+
+</body>
+</html>

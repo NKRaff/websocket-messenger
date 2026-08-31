@@ -1,0 +1,39 @@
+conversa
+	id
+	tipo
+	participantes[]
+	mensagens[]
+
+usuario
+	id
+	nome
+	senha
+	
+mensagem
+	id
+	id conversa
+	id remetente
+	conteúdo
+	data envio
+	
+
+usuario
+	id
+	nome
+	senha
+	
+conversa
+	id
+	tipo
+	data criação
+
+participante conversa
+	id conversa
+	id conta
+
+mensagem
+	id
+	id conversa
+	id remetente
+	conteudo
+	data envio
