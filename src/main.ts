@@ -1,5 +1,6 @@
 import { LoginUseCase } from "@application/use-cases/login.use-case.js";
 import { RegisterUseCase } from "@application/use-cases/register.use-case.js";
+import { initializeDatabase } from "@infrastructure/database/database.js";
 import { UserRepositorySerquelize } from "@infrastructure/database/repositories/user.repository.js";
 import { Routes } from "@infrastructure/http/routes/routes.js";
 import { HttpServer } from "@infrastructure/http/server.js";
@@ -8,6 +9,8 @@ import { BcryptPasswordHasher } from "@infrastructure/security/bcrypt-password-h
 import { JwtTokenProvider } from "@infrastructure/security/jwt-token-provider.js";
 import { LoginController } from "@presentation/controllers/login.controller.js";
 import { RegisterController } from "@presentation/controllers/register.controller.js";
+
+await initializeDatabase()
 
 const idGenerator = new UUIDIdGenerator()
 const passwordHasher = new BcryptPasswordHasher()
