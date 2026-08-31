@@ -22,5 +22,15 @@ export class UserRepositorySerquelize implements UserRepository {
       return new User(model.id, model.name, model.password) || null
     }
   }
+
+  async findById(id: string): Promise<User | null> {
+    const model = await UserModel.findByPk(id)
+
+    if (model === null) {
+      return null
+    } else {
+      return new User(model.id, model.name, model.password)
+    }
+  }
   
 }

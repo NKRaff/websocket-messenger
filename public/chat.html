@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat</title>
-  <link rel="stylesheet" href="styles/index.css">
+
+  <link rel="stylesheet" href="styles/chat.css">
 </head>
 
 <body>
@@ -15,94 +17,122 @@
     <aside class="sidebar">
 
       <div class="sidebar-header">
-        Chat
+
+        <div class="sidebar-title">
+          <span>Chat</span>
+
+          <button
+            class="new-chat-button"
+            id="new-chat-button"
+            title="Novo chat"
+          >
+            +
+          </button>
+        </div>
+
+        <!-- NOVO CHAT -->
+        <div
+          class="new-chat-form"
+          id="new-chat-form"
+        >
+
+          <input
+            type="text"
+            id="username-input"
+            placeholder="Nome do usuário..."
+            autocomplete="off"
+          >
+
+          <div class="new-chat-actions">
+
+            <button
+              id="cancel-chat-button"
+              class="cancel-button"
+            >
+              Cancelar
+            </button>
+
+            <button
+              id="start-chat-button"
+              class="start-button"
+            >
+              Iniciar
+            </button>
+
+          </div>
+
+        </div>
+
       </div>
 
+      <!-- PESQUISA -->
       <input
         class="search"
+        id="search-input"
         type="text"
         placeholder="Pesquisar..."
       >
 
-      <div class="contacts">
+      <!-- CONTATOS DINÂMICOS -->
+      <div
+        class="contacts"
+        id="contacts"
+      ></div>
 
-        <div class="contact active">
-          <div class="avatar">AS</div>
-
-          <div class="contact-info">
-            <div class="contact-name">Ana Silva</div>
-            <div class="contact-message">
-              Até mais tarde!
-            </div>
-          </div>
-        </div>
-
-        <div class="contact">
-          <div class="avatar">JM</div>
-
-          <div class="contact-info">
-            <div class="contact-name">João Mendes</div>
-            <div class="contact-message">
-              Você viu aquele projeto?
-            </div>
-          </div>
-        </div>
-
-        <div class="contact">
-          <div class="avatar">MC</div>
-
-          <div class="contact-info">
-            <div class="contact-name">Maria Costa</div>
-            <div class="contact-message">
-              Obrigada!
-            </div>
-          </div>
-        </div>
-
-      </div>
     </aside>
+
 
     <!-- CHAT -->
     <main class="chat">
 
-      <header class="chat-header">
-        <div class="avatar">AS</div>
+      <!-- CABEÇALHO DINÂMICO -->
+      <header
+        class="chat-header"
+        id="chat-header"
+      >
+
+        <div
+          class="avatar"
+          id="chat-avatar"
+        >
+          ?
+        </div>
 
         <div>
-          <div class="user-name">Ana Silva</div>
-          <div class="status">● Online</div>
+
+          <div
+            class="user-name"
+            id="chat-user-name"
+          >
+            Selecione uma conversa
+          </div>
+
+          <div
+            class="status"
+            id="chat-status"
+          >
+            —
+          </div>
+
         </div>
+
       </header>
 
-      <section class="messages" id="messages">
 
-        <div class="message received">
-          Oi! Tudo bem?
-          <span class="time">16:20</span>
-        </div>
+      <!-- MENSAGENS DINÂMICAS -->
+      <section
+        class="messages"
+        id="messages"
+      >
 
-        <div class="message sent">
-          Oi, Ana! Tudo ótimo 😊
-          <span class="time">16:21</span>
-        </div>
-
-        <div class="message received">
-          Você conseguiu terminar o projeto?
-          <span class="time">16:22</span>
-        </div>
-
-        <div class="message sent">
-          Sim! Terminei agora há pouco.
-          <span class="time">16:23</span>
-        </div>
-
-        <div class="message received">
-          Perfeito! Até mais tarde então!
-          <span class="time">16:24</span>
+        <div class="empty-chat">
+          Selecione um usuário para iniciar uma conversa.
         </div>
 
       </section>
 
+
+      <!-- FORMULÁRIO -->
       <div class="message-form">
 
         <input
@@ -110,9 +140,14 @@
           id="message-input"
           type="text"
           placeholder="Digite uma mensagem..."
+          disabled
         >
 
-        <button class="send-button" id="send-button">
+        <button
+          class="send-button"
+          id="send-button"
+          disabled
+        >
           ➤
         </button>
 
@@ -122,7 +157,10 @@
 
   </div>
 
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="scripts/chat.js"></script>
+
 </body>
+
 </html>
