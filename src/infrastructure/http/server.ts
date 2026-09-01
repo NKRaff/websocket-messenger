@@ -1,4 +1,5 @@
 import { env } from "@infrastructure/config/env.js"
+import { SendMessageController } from "@presentation/controllers/send-message.schema.js"
 import cookieParser from "cookie-parser"
 import express, { Router, type Express } from "express"
 import http from "http"
@@ -27,18 +28,17 @@ export class HttpServer {
     this.app.use(errorHandler)
 
     this.io.use(socketAuth)
-
-    this.listenHttpServer()
-    this.listenSocketServer()
   }
 
-  private listenHttpServer() {
+  listenHttpServer() {
     this.server.listen(env.httpPort, () => {
       console.log(`Http server is running on port ${env.httpPort}`)
     })
   }
 
-  private listenSocketServer() {
-    new SocketHandle(this.io).listen()
+  listenSocketServer(sendMessageController: SendMessageController) {
+    new SocketHandle(
+      this.io, sendMessageController
+    ).listen()
   }
 }

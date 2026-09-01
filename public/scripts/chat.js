@@ -1,10 +1,11 @@
-const token = localStorage.getItem('token')
+// ========================================
+// SOCKET.IO
+// ========================================
 
-const socket = io('http://localhost:3000', {
-  auth: {
-    token
-  }
-})
+const socket =
+  io('http://localhost:3000', {
+    withCredentials: true
+  })
 
 
 // ========================================
@@ -55,23 +56,84 @@ const searchInput =
 // ESTADO DA APLICAÇÃO
 // ========================================
 
+let currentUserId = null
+
 let currentUser = null
+
+let currentConversationId = null
 
 let conversations = {}
 
 
 // ========================================
-// INICIAR
+// INICIALIZAÇÃO
 // ========================================
 
-/*
-  As conversas deverão ser carregadas pelo backend
-  quando a página for iniciada.
+async function initializeChat() {
 
-  Exemplo futuro:
+  await loadCurrentUserId()
 
-  loadConversations()
-*/
+}
+
+
+// ========================================
+// CARREGAR ID DO USUÁRIO LOGADO
+// ========================================
+
+async function loadCurrentUserId() {
+
+  try {
+
+    const response =
+      await fetch(
+        'http://localhost:3000/user/id',
+        {
+          method: 'GET',
+          credentials: 'include'
+        }
+      )
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        `HTTP ${response.status}`
+      )
+
+    }
+
+
+    const data =
+      await response.json()
+
+
+    if (!data.userId) {
+
+      throw new Error(
+        'O servidor não retornou userId.'
+      )
+
+    }
+
+
+    currentUserId =
+      data.userId
+
+
+  } catch (error) {
+
+    console.error(
+      'Erro ao obter ID do usuário:',
+      error
+    )
+
+    alert(
+      'Não foi possível identificar o usuário logado.'
+    )
+
+  }
+
+}
 
 
 // ========================================
@@ -82,64 +144,81 @@ function renderContacts() {
 
   contactsElement.innerHTML = ''
 
-  Object.entries(conversations).forEach(
-    ([conversationId, conversation]) => {
 
-      const contact =
-        document.createElement('div')
+  Object.entries(conversations)
+    .forEach(
+      ([conversationId, conversation]) => {
 
-      contact.classList.add('contact')
-
-      contact.dataset.conversationId =
-        conversationId
+        const contact =
+          document.createElement('div')
 
 
-      // Última mensagem
-      const lastMessage =
-        conversation.messages[
-          conversation.messages.length - 1
-        ]
+        contact.classList.add(
+          'contact'
+        )
 
 
-      contact.innerHTML = `
+        contact.dataset.conversationId =
+          conversationId
 
-        <div class="avatar">
-          ${getInitials(conversation.user.name)}
-        </div>
 
-        <div class="contact-info">
+        // ----------------------------------------
+        // Última mensagem
+        // ----------------------------------------
 
-          <div class="contact-name">
-            ${escapeHTML(conversation.user.name)}
+        const lastMessage =
+          conversation.messages[
+            conversation.messages.length - 1
+          ]
+
+
+        contact.innerHTML = `
+
+          <div class="avatar">
+            ${getInitials(conversation.user.name)}
           </div>
 
-          <div class="contact-message">
-            ${
-              lastMessage
-                ? escapeHTML(lastMessage.content)
-                : 'Nova conversa'
-            }
+          <div class="contact-info">
+
+            <div class="contact-name">
+              ${escapeHTML(conversation.user.name)}
+            </div>
+
+            <div class="contact-message">
+              ${
+                lastMessage
+                  ? escapeHTML(lastMessage.content)
+                  : 'Nova conversa'
+              }
+            </div>
+
           </div>
 
-        </div>
-
-      `
+        `
 
 
-      contact.addEventListener(
-        'click',
-        () => {
+        // ----------------------------------------
+        // Selecionar conversa
+        // ----------------------------------------
 
-          selectConversation(conversationId)
+        contact.addEventListener(
+          'click',
+          () => {
 
-        }
-      )
+            selectConversation(
+              conversationId
+            )
+
+          }
+        )
 
 
-      contactsElement.appendChild(contact)
+        contactsElement.appendChild(
+          contact
+        )
 
-    }
-  )
+      }
+    )
 
 }
 
@@ -148,7 +227,9 @@ function renderContacts() {
 // SELECIONAR CONVERSA
 // ========================================
 
-function selectConversation(conversationId) {
+function selectConversation(
+  conversationId
+) {
 
   const conversation =
     conversations[conversationId]
@@ -157,6 +238,14 @@ function selectConversation(conversationId) {
   if (!conversation) {
     return
   }
+
+
+  // ----------------------------------------
+  // Atualiza estado
+  // ----------------------------------------
+
+  currentConversationId =
+    conversationId
 
 
   currentUser =
@@ -169,15 +258,18 @@ function selectConversation(conversationId) {
 
   document
     .querySelectorAll('.contact')
-    .forEach(contact => {
+    .forEach(
+      contact => {
 
-      contact.classList.toggle(
-        'active',
-        contact.dataset.conversationId ===
-        conversationId
-      )
+        contact.classList.toggle(
+          'active',
 
-    })
+          contact.dataset.conversationId ===
+            conversationId
+        )
+
+      }
+    )
 
 
   // ----------------------------------------
@@ -187,8 +279,11 @@ function selectConversation(conversationId) {
   chatUserName.textContent =
     conversation.user.name
 
+
   chatAvatar.textContent =
-    getInitials(conversation.user.name)
+    getInitials(
+      conversation.user.name
+    )
 
 
   chatStatus.textContent =
@@ -207,8 +302,11 @@ function selectConversation(conversationId) {
   // Habilita envio
   // ----------------------------------------
 
-  messageInput.disabled = false
-  sendButton.disabled = false
+  messageInput.disabled =
+    false
+
+  sendButton.disabled =
+    false
 
 
   messageInput.placeholder =
@@ -219,7 +317,9 @@ function selectConversation(conversationId) {
   // Renderiza mensagens
   // ----------------------------------------
 
-  renderMessages(conversationId)
+  renderMessages(
+    conversationId
+  )
 
 }
 
@@ -228,7 +328,9 @@ function selectConversation(conversationId) {
 // RENDERIZAR MENSAGENS
 // ========================================
 
-function renderMessages(conversationId) {
+function renderMessages(
+  conversationId
+) {
 
   messagesElement.innerHTML = ''
 
@@ -242,27 +344,50 @@ function renderMessages(conversationId) {
   }
 
 
-  if (!conversation.messages.length) {
+  // ----------------------------------------
+  // Nenhuma mensagem
+  // ----------------------------------------
+
+  if (
+    !conversation.messages.length
+  ) {
 
     const empty =
       document.createElement('div')
 
-    empty.classList.add('empty-chat')
+
+    empty.classList.add(
+      'empty-chat'
+    )
+
 
     empty.textContent =
       `Inicie uma conversa com ${conversation.user.name}`
 
-    messagesElement.appendChild(empty)
+
+    messagesElement.appendChild(
+      empty
+    )
+
 
     return
+
   }
 
 
-  conversation.messages.forEach(message => {
+  // ----------------------------------------
+  // Mensagens
+  // ----------------------------------------
 
-    addMessageToDOM(message)
+  conversation.messages.forEach(
+    message => {
 
-  })
+      addMessageToDOM(
+        message
+      )
+
+    }
+  )
 
 
   scrollMessages()
@@ -274,27 +399,13 @@ function renderMessages(conversationId) {
 // ADICIONAR MENSAGEM NA TELA
 // ========================================
 
-function addMessageToDOM(message) {
+function addMessageToDOM(
+  message
+) {
 
   const element =
     document.createElement('div')
 
-  /*
-    O backend retorna:
-
-    {
-      id,
-      content,
-      date
-    }
-
-    Ainda não temos no DTO quem enviou a mensagem.
-    Portanto, por enquanto, as mensagens recebidas
-    pelo histórico serão consideradas "received".
-
-    Quando o backend enviar senderId, podemos
-    determinar corretamente "sent" / "received".
-  */
 
   element.classList.add(
     'message',
@@ -309,15 +420,26 @@ function addMessageToDOM(message) {
   const time =
     document.createElement('span')
 
-  time.classList.add('time')
+
+  time.classList.add(
+    'time'
+  )
+
 
   time.textContent =
-    formatMessageDate(message.date)
+    formatMessageDate(
+      message.date
+    )
 
 
-  element.appendChild(time)
+  element.appendChild(
+    time
+  )
 
-  messagesElement.appendChild(element)
+
+  messagesElement.appendChild(
+    element
+  )
 
 }
 
@@ -328,10 +450,18 @@ function addMessageToDOM(message) {
 
 function sendMessage() {
 
-  if (!currentUser) {
+  // ----------------------------------------
+  // Verifica conversa selecionada
+  // ----------------------------------------
+
+  if (!currentConversationId) {
     return
   }
 
+
+  // ----------------------------------------
+  // Texto
+  // ----------------------------------------
 
   const text =
     messageInput.value.trim()
@@ -342,12 +472,14 @@ function sendMessage() {
   }
 
 
+  // ----------------------------------------
+  // Conversa
+  // ----------------------------------------
+
   const conversation =
-    Object.values(conversations)
-      .find(
-        conversation =>
-          conversation.user.name === currentUser
-      )
+    conversations[
+      currentConversationId
+    ]
 
 
   if (!conversation) {
@@ -356,19 +488,29 @@ function sendMessage() {
 
 
   // ----------------------------------------
-  // Envia para Socket.IO
+  // Envia pelo WebSocket
   // ----------------------------------------
 
-  socket.emit('message', {
+  socket.emit(
+    'send_message',
+    {
 
-    conversationId:
-      conversation.id,
+      recipientId:
+        conversation.user.id,
 
-    message:
-      text
+      chatId:
+        conversation.id,
 
-  })
+      message:
+        text
 
+    }
+  )
+
+
+  // ----------------------------------------
+  // Limpa input
+  // ----------------------------------------
 
   messageInput.value = ''
 
@@ -395,7 +537,9 @@ messageInput.addEventListener(
   'keydown',
   event => {
 
-    if (event.key === 'Enter') {
+    if (
+      event.key === 'Enter'
+    ) {
 
       event.preventDefault()
 
@@ -415,9 +559,16 @@ newChatButton.addEventListener(
   'click',
   () => {
 
-    newChatForm.classList.toggle('show')
+    newChatForm.classList.toggle(
+      'show'
+    )
 
-    if (newChatForm.classList.contains('show')) {
+
+    if (
+      newChatForm.classList.contains(
+        'show'
+      )
+    ) {
 
       usernameInput.focus()
 
@@ -428,7 +579,7 @@ newChatButton.addEventListener(
 
 
 // ========================================
-// CANCELAR
+// CANCELAR NOVO CHAT
 // ========================================
 
 cancelChatButton.addEventListener(
@@ -437,7 +588,9 @@ cancelChatButton.addEventListener(
 
     usernameInput.value = ''
 
-    newChatForm.classList.remove('show')
+    newChatForm.classList.remove(
+      'show'
+    )
 
   }
 )
@@ -463,10 +616,11 @@ async function createNewChat() {
 
 
   // ----------------------------------------
-  // Desabilita botão durante requisição
+  // Desabilita botão
   // ----------------------------------------
 
-  startChatButton.disabled = true
+  startChatButton.disabled =
+    true
 
 
   try {
@@ -478,7 +632,8 @@ async function createNewChat() {
           method: 'POST',
 
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type':
+              'application/json'
           },
 
           credentials: 'include',
@@ -505,10 +660,12 @@ async function createNewChat() {
         data
       )
 
+
       alert(
         data.message ||
         'Não foi possível iniciar a conversa.'
       )
+
 
       return
 
@@ -516,32 +673,8 @@ async function createNewChat() {
 
 
     // ----------------------------------------
-    // Resposta esperada
+    // Conversa
     // ----------------------------------------
-
-    /*
-      {
-        message: string,
-
-        conversation: {
-          id: string,
-
-          user: {
-            id: string,
-            name: string,
-            online: boolean
-          },
-
-          messages: [
-            {
-              id: string,
-              content: string,
-              date: Date
-            }
-          ]
-        }
-      }
-    */
 
     const conversation =
       data.conversation
@@ -554,9 +687,11 @@ async function createNewChat() {
         data
       )
 
+
       alert(
         'O servidor retornou uma resposta inválida.'
       )
+
 
       return
 
@@ -567,7 +702,9 @@ async function createNewChat() {
     // Adiciona/atualiza conversa
     // ----------------------------------------
 
-    conversations[conversation.id] =
+    conversations[
+      conversation.id
+    ] =
       conversation
 
 
@@ -608,13 +745,15 @@ async function createNewChat() {
       error
     )
 
+
     alert(
       'Não foi possível conectar ao servidor.'
     )
 
   } finally {
 
-    startChatButton.disabled = false
+    startChatButton.disabled =
+      false
 
   }
 
@@ -639,7 +778,9 @@ usernameInput.addEventListener(
   'keydown',
   event => {
 
-    if (event.key === 'Enter') {
+    if (
+      event.key === 'Enter'
+    ) {
 
       event.preventDefault()
 
@@ -657,7 +798,9 @@ usernameInput.addEventListener(
 
 function closeNewChatForm() {
 
-  newChatForm.classList.remove('show')
+  newChatForm.classList.remove(
+    'show'
+  )
 
 }
 
@@ -678,32 +821,36 @@ searchInput.addEventListener(
 
     document
       .querySelectorAll('.contact')
-      .forEach(contact => {
+      .forEach(
+        contact => {
 
-        const conversationId =
-          contact.dataset.conversationId
-
-
-        const conversation =
-          conversations[conversationId]
+          const conversationId =
+            contact.dataset.conversationId
 
 
-        if (!conversation) {
-          return
+          const conversation =
+            conversations[
+              conversationId
+            ]
+
+
+          if (!conversation) {
+            return
+          }
+
+
+          const username =
+            conversation.user.name
+              .toLowerCase()
+
+
+          contact.style.display =
+            username.includes(search)
+              ? 'flex'
+              : 'none'
+
         }
-
-
-        const username =
-          conversation.user.name
-            .toLowerCase()
-
-
-        contact.style.display =
-          username.includes(search)
-            ? 'flex'
-            : 'none'
-
-      })
+      )
 
   }
 )
@@ -717,39 +864,20 @@ socket.on(
   'message',
   data => {
 
-    /*
-      Idealmente o backend deverá enviar algo como:
-
-      {
-        id: "message-id",
-        conversationId: "conversation-id",
-        content: "Olá!",
-        date: "2026-08-31T15:30:00.000Z"
-      }
-
-      Se o backend ainda enviar "from",
-      podemos adaptar posteriormente.
-    */
-
-
-    const conversationId =
-      data.conversationId
-
-
-    if (!conversationId) {
-      return
-    }
-
 
     // ----------------------------------------
-    // Verifica se a conversa existe
+    // Chat ID
     // ----------------------------------------
 
-    if (!conversations[conversationId]) {
+    const chatId =
+      data.chatId
+
+
+    if (!chatId) {
 
       console.warn(
-        'Mensagem recebida para conversa desconhecida:',
-        conversationId
+        'Mensagem sem chatId:',
+        data
       )
 
       return
@@ -758,8 +886,79 @@ socket.on(
 
 
     // ----------------------------------------
-    // Adiciona mensagem
+    // Verifica remetente
     // ----------------------------------------
+
+    if (!data.sender) {
+
+      console.warn(
+        'Mensagem sem remetente:',
+        data
+      )
+
+      return
+
+    }
+
+
+    // ========================================
+    // CRIA CONVERSA CASO NÃO EXISTA
+    // ========================================
+
+    if (
+      !conversations[chatId]
+    ) {
+
+      conversations[chatId] = {
+
+        id:
+          chatId,
+
+        user: {
+
+          id:
+            data.sender.id,
+
+          name:
+            data.sender.name,
+
+          online:
+            data.sender.online ?? true
+
+        },
+
+        messages: []
+
+      }
+
+    }
+
+
+    // ========================================
+    // EVITA DUPLICAR MENSAGEM
+    // ========================================
+
+    const conversation =
+      conversations[chatId]
+
+
+    const alreadyExists =
+      conversation.messages.some(
+        message =>
+          message.id === data.id
+      )
+
+
+    if (alreadyExists) {
+
+      return
+
+    }
+
+
+    // ========================================
+    // CRIA MENSAGEM
+    // ========================================
 
     const message = {
 
@@ -767,49 +966,45 @@ socket.on(
         data.id,
 
       content:
-        data.content,
+        data.message,
 
       date:
         data.date,
 
       type:
-        'received'
+        data.sender.id === currentUserId
+          ? 'sent'
+          : 'received'
 
     }
 
 
-    conversations[conversationId]
-      .messages
-      .push(message)
+    conversation.messages.push(
+      message
+    )
 
 
-    // ----------------------------------------
-    // Atualiza lista
-    // ----------------------------------------
+    // ========================================
+    // ATUALIZA SIDEBAR
+    // ========================================
 
     renderContacts()
 
 
-    // ----------------------------------------
-    // Se a conversa está aberta
-    // ----------------------------------------
-
-    const currentConversation =
-      Object.values(conversations)
-        .find(
-          conversation =>
-            conversation.user.name === currentUser
-        )
-
+    // ========================================
+    // ATUALIZA CHAT ABERTO
+    // ========================================
 
     if (
-      currentConversation &&
-      currentConversation.id === conversationId
+      currentConversationId ===
+      chatId
     ) {
 
-      renderMessages(conversationId)
+      renderMessages(
+        chatId
+      )
 
-      selectConversation(conversationId)
+      scrollMessages()
 
     }
 
@@ -823,13 +1018,7 @@ socket.on(
 
 socket.on(
   'connect',
-  () => {
-
-    console.log(
-      'Conectado ao servidor'
-    )
-
-  }
+  () => {}
 )
 
 
@@ -841,12 +1030,16 @@ socket.on(
   'connect_error',
   error => {
 
+    console.error(
+      'Erro de conexão Socket.IO:',
+      error
+    )
+
+
     if (
       error.message ===
       'User is not authenticated'
     ) {
-
-      localStorage.removeItem('token')
 
       window.location.href =
         'http://localhost:3000/'
@@ -861,7 +1054,9 @@ socket.on(
 // FUNÇÕES AUXILIARES
 // ========================================
 
-function getInitials(name) {
+function getInitials(
+  name
+) {
 
   const parts =
     name
@@ -869,7 +1064,9 @@ function getInitials(name) {
       .split(/\s+/)
 
 
-  if (parts.length === 1) {
+  if (
+    parts.length === 1
+  ) {
 
     return parts[0]
       .substring(0, 2)
@@ -882,14 +1079,22 @@ function getInitials(name) {
 
     parts[0][0] +
 
-    parts[parts.length - 1][0]
+    parts[
+      parts.length - 1
+    ][0]
 
   ).toUpperCase()
 
 }
 
 
-function formatMessageDate(date) {
+// ========================================
+// FORMATAR DATA
+// ========================================
+
+function formatMessageDate(
+  date
+) {
 
   if (!date) {
     return ''
@@ -900,8 +1105,14 @@ function formatMessageDate(date) {
     new Date(date)
 
 
-  if (Number.isNaN(parsedDate.getTime())) {
+  if (
+    Number.isNaN(
+      parsedDate.getTime()
+    )
+  ) {
+
     return ''
+
   }
 
 
@@ -924,6 +1135,10 @@ function formatMessageDate(date) {
 }
 
 
+// ========================================
+// SCROLL
+// ========================================
+
 function scrollMessages() {
 
   messagesElement.scrollTop =
@@ -932,13 +1147,29 @@ function scrollMessages() {
 }
 
 
-function escapeHTML(text) {
+// ========================================
+// ESCAPAR HTML
+// ========================================
+
+function escapeHTML(
+  text
+) {
 
   const element =
     document.createElement('div')
 
-  element.textContent = text
+
+  element.textContent =
+    text
+
 
   return element.innerHTML
 
 }
+
+
+// ========================================
+// INICIAR APLICAÇÃO
+// ========================================
+
+initializeChat()

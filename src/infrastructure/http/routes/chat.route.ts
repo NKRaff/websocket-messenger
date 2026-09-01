@@ -14,6 +14,14 @@ export class ChatRoutes {
   }
 
   private setupRoutes() {
+    this.routes.get('/', (req, res) => {
+      try {
+        res.sendFile('chat.html', { root: 'public' })
+      } catch (error) {
+        console.error(error)
+      }
+    })
+
     this.routes.post('/create', httpAuth, async (req, res, next) => {
       try {
         const seekerId = req.user?.id

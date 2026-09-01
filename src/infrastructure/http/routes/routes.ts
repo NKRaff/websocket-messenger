@@ -4,6 +4,7 @@ import type { StartChatOutputDto } from "@application/dtos/start-chat.dto.js";
 import type { Controller } from "@application/protocols/controller.js";
 import { Router } from "express";
 import { ChatRoutes } from "./chat.route.js";
+import { UserRoute } from "./user.route.js";
 
 export class Routes {
   private routes: Router
@@ -18,6 +19,10 @@ export class Routes {
   }
 
   setupRoutes() {
+    this.routes.get('/', (req, res) => {
+      res.sendFile('login.html', { root: 'public' })
+    })
+
     this.routes.use(
       '/chat', 
       new ChatRoutes(
@@ -25,51 +30,13 @@ export class Routes {
       ).getRoutes()
     )
     
-    this.routes.get('/', (req, res) => {
-      res.sendFile('login.html', { root: 'public' })
-    })
-
-    this.routes.get('/chat', (req, res) => {
-      try {
-        res.sendFile('chat.html', { root: 'public' })
-      } catch (error) {
-        console.error(error)
-      }
-    })
-    
-    this.routes.post('/user/register', async (req, res, next) => {
-      try {
-        const result = await this.registerController.handle(req.body)
-        return res
-          .status(201)
-          .cookie("access_token", result.token, {
-            maxAge: 3600000,
-            httpOnly: true,
-            secure: false,
-            sameSite: 'strict'
-          })
-          .json(result.message)
-      } catch (error) {
-        next(error)
-      }
-    })
-
-    this.routes.post('/user/login', async (req, res, next) => {
-      try {
-        const result = await this.loginController.handle(req.body)
-        return res
-          .status(200)
-          .cookie("access_token", result.token, {
-            maxAge: 3600000,
-            httpOnly: true,
-            secure: false,
-            sameSite: 'strict'
-          })
-          .json(result.message)
-      } catch (error) {
-        next(error)
-      }
-    })
+    this.routes.use(
+      '/user',
+      new UserRoute(
+        this.registerController,
+        this.loginController
+      ).getRoutes()
+    )
   }
 
   getRoutes() {
