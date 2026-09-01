@@ -1,3 +1,4 @@
+import type { LoadMessageOutputDto } from "@application/dtos/load-message.dto.js";
 import type { LoginOutputDto } from "@application/dtos/login.dto.js";
 import type { RegisterOutputDto } from "@application/dtos/register.dto.js";
 import type { StartChatOutputDto } from "@application/dtos/start-chat.dto.js";
@@ -12,7 +13,8 @@ export class Routes {
   constructor(
     private readonly registerController: Controller<RegisterOutputDto>,
     private readonly loginController: Controller<LoginOutputDto>,
-    private readonly startChatController: Controller<StartChatOutputDto>
+    private readonly startChatController: Controller<StartChatOutputDto>,
+    private readonly loadMessageController: Controller<LoadMessageOutputDto>
   ) {
     this.routes = Router()
     this.setupRoutes()
@@ -26,7 +28,8 @@ export class Routes {
     this.routes.use(
       '/chat', 
       new ChatRoutes(
-        this.startChatController
+        this.startChatController,
+        this.loadMessageController
       ).getRoutes()
     )
     

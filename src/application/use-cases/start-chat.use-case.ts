@@ -36,15 +36,18 @@ export class StartChatUseCase implements UseCase<StartChatInputDto, StartChatOut
         message: "Chat successfully created",
         conversation: {
           id: chatExisting.getId(),
-          user: {
-            id: sought.getId(),
-            name: sought.getName(),
-            online: true
-          },
+          type: chatExisting.getType(),
+          users: chatExisting.getParticipants().map((user) => {
+            return {
+              id: user.getId(),
+              name: user.getName(),
+              online: true
+            }
+          }),
           messages: chatExisting.getMessage().map((message) => {
             return {
               id: message.getId(),
-              senderId: message.getIdSender(),
+              idSender: message.getIdSender(),
               content: message.getContent(),
               date: message.getDate()
             }
@@ -66,11 +69,14 @@ export class StartChatUseCase implements UseCase<StartChatInputDto, StartChatOut
       message: "Chat successfully created",
       conversation: {
         id: chat.getId(),
-        user: {
-          id: sought.getId(),
-          name: sought.getName(),
-          online: true
-        },
+        type: chat.getType(),
+        users: chat.getParticipants().map((user) => {
+          return {
+            id: user.getId(),
+            name: user.getName(),
+            online: true
+          }
+        }),
         messages: []
       }
     }

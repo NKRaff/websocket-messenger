@@ -1,12 +1,9 @@
-
-export type StartChatInputDto = {
-  seekerId: string,
-  soughtName: string
+export type LoadMessageInputDto = {
+  userId: string
 }
 
-export type StartChatOutputDto = {
-  message: string,
-  conversation: {
+export type LoadMessageOutputDto = {
+  chat: {
     id: string,
     type: string,
     users: {
@@ -20,5 +17,5 @@ export type StartChatOutputDto = {
       content: string,
       date: Date
     }[]
-  }
+  }[]
 }

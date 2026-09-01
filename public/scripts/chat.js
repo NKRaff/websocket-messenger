@@ -53,12 +53,10 @@ const searchInput =
 
 
 // ========================================
-// ESTADO DA APLICAÇÃO
+// ESTADO
 // ========================================
 
 let currentUserId = null
-
-let currentUser = null
 
 let currentConversationId = null
 
@@ -71,67 +69,277 @@ let conversations = {}
 
 async function initializeChat() {
 
-  await loadCurrentUserId()
+  try {
+
+    await loadCurrentUserId()
+
+    await loadMessages()
+
+    renderContacts()
+
+  } catch (error) {
+
+    console.error(
+      'Erro ao inicializar chat:',
+      error
+    )
+
+  }
 
 }
 
 
 // ========================================
-// CARREGAR ID DO USUÁRIO LOGADO
+// CARREGAR USUÁRIO LOGADO
 // ========================================
 
 async function loadCurrentUserId() {
 
-  try {
-
-    const response =
-      await fetch(
-        'http://localhost:3000/user/id',
-        {
-          method: 'GET',
-          credentials: 'include'
-        }
-      )
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        `HTTP ${response.status}`
-      )
-
-    }
-
-
-    const data =
-      await response.json()
-
-
-    if (!data.userId) {
-
-      throw new Error(
-        'O servidor não retornou userId.'
-      )
-
-    }
-
-
-    currentUserId =
-      data.userId
-
-
-  } catch (error) {
-
-    console.error(
-      'Erro ao obter ID do usuário:',
-      error
+  const response =
+    await fetch(
+      'http://localhost:3000/user/id',
+      {
+        method: 'GET',
+        credentials: 'include'
+      }
     )
 
-    alert(
-      'Não foi possível identificar o usuário logado.'
+
+  if (!response.ok) {
+
+    throw new Error(
+      `Não foi possível obter o usuário. HTTP ${response.status}`
     )
 
   }
+
+
+  const data =
+    await response.json()
+
+
+  if (!data.userId) {
+
+    throw new Error(
+      'O servidor não retornou userId.'
+    )
+
+  }
+
+
+  currentUserId =
+    data.userId
+
+
+}
+
+
+// ========================================
+// CARREGAR CHATS
+// ========================================
+
+async function loadMessages() {
+
+  const response =
+    await fetch(
+      'http://localhost:3000/chat/load-messages',
+      {
+        method: 'GET',
+        credentials: 'include'
+      }
+    )
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `Erro ao carregar mensagens. HTTP ${response.status}`
+    )
+
+  }
+
+
+  const data =
+    await response.json()
+
+
+  if (
+    !data.chat ||
+    !Array.isArray(data.chat)
+  ) {
+
+    console.warn(
+      'Formato inesperado:',
+      data
+    )
+
+    return
+
+  }
+
+
+  data.chat.forEach(
+    chat => {
+
+      conversations[chat.id] = {
+
+        id:
+          chat.id,
+
+        type:
+          chat.type,
+
+        users:
+          chat.users ?? [],
+
+        messages:
+          (chat.messages ?? [])
+            .map(
+              message => ({
+
+                id:
+                  message.id,
+
+                senderId:
+                  message.idSender,
+
+                content:
+                  message.content,
+
+                date:
+                  message.date,
+
+                type:
+                  message.idSender ===
+                  currentUserId
+
+                    ? 'sent'
+                    : 'received'
+
+              })
+            )
+
+      }
+
+    }
+  )
+
+}
+
+
+// ========================================
+// USUÁRIOS DO CHAT
+// ========================================
+
+function getOtherUsers(
+  conversation
+) {
+
+  return conversation.users
+    .filter(
+      user =>
+        user.id !== currentUserId
+    )
+
+}
+
+
+// ========================================
+// NOME DA CONVERSA
+// ========================================
+
+function getConversationName(
+  conversation
+) {
+
+  const otherUsers =
+    getOtherUsers(
+      conversation
+    )
+
+
+  // ----------------------------------------
+  // GRUPO
+  // ----------------------------------------
+
+  if (
+    conversation.type === 'group'
+  ) {
+
+    if (!otherUsers.length) {
+
+      return 'Grupo'
+
+    }
+
+
+    return otherUsers
+      .map(
+        user =>
+          user.name
+      )
+      .join(', ')
+
+  }
+
+
+  // ----------------------------------------
+  // CHAT PRIVADO
+  // ----------------------------------------
+
+  const user =
+    otherUsers[0]
+
+
+  return user
+    ? user.name
+    : 'Usuário'
+
+}
+
+
+// ========================================
+// AVATAR
+// ========================================
+
+function getConversationAvatar(
+  conversation
+) {
+
+  return getInitials(
+    getConversationName(
+      conversation
+    )
+  )
+
+}
+
+
+// ========================================
+// STATUS
+// ========================================
+
+function getConversationOnline(
+  conversation
+) {
+
+  const otherUsers =
+    getOtherUsers(
+      conversation
+    )
+
+
+  if (!otherUsers.length) {
+
+    return false
+
+  }
+
+
+  return otherUsers.some(
+    user =>
+      user.online
+  )
 
 }
 
@@ -145,80 +353,81 @@ function renderContacts() {
   contactsElement.innerHTML = ''
 
 
-  Object.entries(conversations)
-    .forEach(
-      ([conversationId, conversation]) => {
+  Object.entries(
+    conversations
+  ).forEach(
+    ([conversationId, conversation]) => {
 
-        const contact =
-          document.createElement('div')
+      const contact =
+        document.createElement('div')
 
 
-        contact.classList.add(
-          'contact'
+      contact.classList.add(
+        'contact'
+      )
+
+
+      contact.dataset.conversationId =
+        conversationId
+
+
+      const lastMessage =
+        conversation.messages[
+          conversation.messages.length - 1
+        ]
+
+
+      const conversationName =
+        getConversationName(
+          conversation
         )
 
 
-        contact.dataset.conversationId =
-          conversationId
+      contact.innerHTML = `
 
+        <div class="avatar">
+          ${getConversationAvatar(conversation)}
+        </div>
 
-        // ----------------------------------------
-        // Última mensagem
-        // ----------------------------------------
+        <div class="contact-info">
 
-        const lastMessage =
-          conversation.messages[
-            conversation.messages.length - 1
-          ]
-
-
-        contact.innerHTML = `
-
-          <div class="avatar">
-            ${getInitials(conversation.user.name)}
+          <div class="contact-name">
+            ${escapeHTML(conversationName)}
           </div>
 
-          <div class="contact-info">
-
-            <div class="contact-name">
-              ${escapeHTML(conversation.user.name)}
-            </div>
-
-            <div class="contact-message">
-              ${
-                lastMessage
-                  ? escapeHTML(lastMessage.content)
-                  : 'Nova conversa'
-              }
-            </div>
-
+          <div class="contact-message">
+            ${
+              lastMessage
+                ? escapeHTML(
+                    lastMessage.content
+                  )
+                : 'Nova conversa'
+            }
           </div>
 
-        `
+        </div>
+
+      `
 
 
-        // ----------------------------------------
-        // Selecionar conversa
-        // ----------------------------------------
+      contact.addEventListener(
+        'click',
+        () => {
 
-        contact.addEventListener(
-          'click',
-          () => {
+          selectConversation(
+            conversationId
+          )
 
-            selectConversation(
-              conversationId
-            )
-
-          }
-        )
+        }
+      )
 
 
-        contactsElement.appendChild(
-          contact
-        )
+      contactsElement.appendChild(
+        contact
+      )
 
-      }
-    )
+    }
+  )
 
 }
 
@@ -232,28 +441,24 @@ function selectConversation(
 ) {
 
   const conversation =
-    conversations[conversationId]
+    conversations[
+      conversationId
+    ]
 
 
   if (!conversation) {
+
     return
+
   }
 
-
-  // ----------------------------------------
-  // Atualiza estado
-  // ----------------------------------------
 
   currentConversationId =
     conversationId
 
 
-  currentUser =
-    conversation.user.name
-
-
   // ----------------------------------------
-  // Atualiza contato ativo
+  // CONTATO ATIVO
   // ----------------------------------------
 
   document
@@ -273,33 +478,71 @@ function selectConversation(
 
 
   // ----------------------------------------
-  // Atualiza cabeçalho
+  // CABEÇALHO
   // ----------------------------------------
 
-  chatUserName.textContent =
-    conversation.user.name
-
-
-  chatAvatar.textContent =
-    getInitials(
-      conversation.user.name
+  const conversationName =
+    getConversationName(
+      conversation
     )
 
 
-  chatStatus.textContent =
-    conversation.user.online
-      ? '● Online'
-      : '● Offline'
+  chatUserName.textContent =
+    conversationName
+
+
+  chatAvatar.textContent =
+    getConversationAvatar(
+      conversation
+    )
+
+
+  // ----------------------------------------
+  // STATUS
+  // ----------------------------------------
+
+  const online =
+    getConversationOnline(
+      conversation
+    )
+
+
+  if (
+    conversation.type === 'group'
+  ) {
+
+    const onlineCount =
+      getOtherUsers(
+        conversation
+      )
+        .filter(
+          user =>
+            user.online
+        )
+        .length
+
+
+    chatStatus.textContent =
+      `${onlineCount} online`
+
+  } else {
+
+    chatStatus.textContent =
+      online
+        ? '● Online'
+        : '● Offline'
+
+  }
 
 
   chatStatus.style.color =
-    conversation.user.online
+    online
       ? '#22c55e'
       : '#9ca3af'
 
 
   // ----------------------------------------
-  // Habilita envio
+  // ENVIO
   // ----------------------------------------
 
   messageInput.disabled =
@@ -310,11 +553,11 @@ function selectConversation(
 
 
   messageInput.placeholder =
-    `Digite uma mensagem para ${conversation.user.name}...`
+    `Digite uma mensagem para ${conversationName}...`
 
 
   // ----------------------------------------
-  // Renderiza mensagens
+  // MENSAGENS
   // ----------------------------------------
 
   renderMessages(
@@ -336,17 +579,17 @@ function renderMessages(
 
 
   const conversation =
-    conversations[conversationId]
+    conversations[
+      conversationId
+    ]
 
 
   if (!conversation) {
+
     return
+
   }
 
-
-  // ----------------------------------------
-  // Nenhuma mensagem
-  // ----------------------------------------
 
   if (
     !conversation.messages.length
@@ -362,7 +605,7 @@ function renderMessages(
 
 
     empty.textContent =
-      `Inicie uma conversa com ${conversation.user.name}`
+      `Inicie uma conversa com ${getConversationName(conversation)}`
 
 
     messagesElement.appendChild(
@@ -374,10 +617,6 @@ function renderMessages(
 
   }
 
-
-  // ----------------------------------------
-  // Mensagens
-  // ----------------------------------------
 
   conversation.messages.forEach(
     message => {
@@ -396,7 +635,7 @@ function renderMessages(
 
 
 // ========================================
-// ADICIONAR MENSAGEM NA TELA
+// ADICIONAR MENSAGEM
 // ========================================
 
 function addMessageToDOM(
@@ -409,7 +648,8 @@ function addMessageToDOM(
 
   element.classList.add(
     'message',
-    message.type || 'received'
+    message.type ||
+      'received'
   )
 
 
@@ -450,31 +690,25 @@ function addMessageToDOM(
 
 function sendMessage() {
 
-  // ----------------------------------------
-  // Verifica conversa selecionada
-  // ----------------------------------------
+  if (
+    !currentConversationId
+  ) {
 
-  if (!currentConversationId) {
     return
+
   }
 
-
-  // ----------------------------------------
-  // Texto
-  // ----------------------------------------
 
   const text =
     messageInput.value.trim()
 
 
   if (!text) {
+
     return
+
   }
 
-
-  // ----------------------------------------
-  // Conversa
-  // ----------------------------------------
 
   const conversation =
     conversations[
@@ -483,36 +717,71 @@ function sendMessage() {
 
 
   if (!conversation) {
+
     return
+
   }
 
 
-  // ----------------------------------------
-  // Envia pelo WebSocket
-  // ----------------------------------------
+  const otherUsers =
+    getOtherUsers(
+      conversation
+    )
+
+
+  if (!otherUsers.length) {
+
+    console.warn(
+      'Nenhum destinatário encontrado.',
+      conversation
+    )
+
+    return
+
+  }
+
+
+  /*
+    Backend atual:
+
+      socket.on("send_message", ...)
+
+    recebe:
+
+      recipientId
+      message
+      chatId
+
+    Para chat privado temos apenas
+    um destinatário.
+  */
+
+  const recipientId =
+    otherUsers[0].id
+
 
   socket.emit(
     'send_message',
     {
 
       recipientId:
-        conversation.user.id,
 
-      chatId:
-        conversation.id,
+        recipientId,
 
       message:
-        text
+
+        text,
+
+      chatId:
+
+        conversation.id
 
     }
   )
 
 
-  // ----------------------------------------
-  // Limpa input
-  // ----------------------------------------
-
-  messageInput.value = ''
+  messageInput.value =
+    ''
 
   messageInput.focus()
 
@@ -530,7 +799,7 @@ sendButton.addEventListener(
 
 
 // ========================================
-// ENTER PARA ENVIAR
+// ENTER
 // ========================================
 
 messageInput.addEventListener(
@@ -579,14 +848,15 @@ newChatButton.addEventListener(
 
 
 // ========================================
-// CANCELAR NOVO CHAT
+// CANCELAR
 // ========================================
 
 cancelChatButton.addEventListener(
   'click',
   () => {
 
-    usernameInput.value = ''
+    usernameInput.value =
+      ''
 
     newChatForm.classList.remove(
       'show'
@@ -615,10 +885,6 @@ async function createNewChat() {
   }
 
 
-  // ----------------------------------------
-  // Desabilita botão
-  // ----------------------------------------
-
   startChatButton.disabled =
     true
 
@@ -629,18 +895,25 @@ async function createNewChat() {
       await fetch(
         'http://localhost:3000/chat/create',
         {
-          method: 'POST',
+
+          method:
+            'POST',
 
           headers: {
+
             'Content-Type':
               'application/json'
+
           },
 
-          credentials: 'include',
+          credentials:
+            'include',
 
-          body: JSON.stringify({
-            soughtName
-          })
+          body:
+            JSON.stringify({
+              soughtName
+            })
+
         }
       )
 
@@ -648,10 +921,6 @@ async function createNewChat() {
     const data =
       await response.json()
 
-
-    // ----------------------------------------
-    // Erro HTTP
-    // ----------------------------------------
 
     if (!response.ok) {
 
@@ -672,10 +941,6 @@ async function createNewChat() {
     }
 
 
-    // ----------------------------------------
-    // Conversa
-    // ----------------------------------------
-
     const conversation =
       data.conversation
 
@@ -683,7 +948,7 @@ async function createNewChat() {
     if (!conversation) {
 
       console.error(
-        'Resposta inválida do backend:',
+        'Resposta inválida:',
         data
       )
 
@@ -699,24 +964,61 @@ async function createNewChat() {
 
 
     // ----------------------------------------
-    // Adiciona/atualiza conversa
+    // ADICIONA CONVERSA
     // ----------------------------------------
 
     conversations[
       conversation.id
-    ] =
-      conversation
+    ] = {
+
+      id:
+        conversation.id,
+
+      type:
+        conversation.type,
+
+      users:
+        conversation.users ?? [],
+
+      messages:
+        (conversation.messages ?? [])
+          .map(
+            message => ({
+
+              id:
+                message.id,
+
+              senderId:
+                message.idSender,
+
+              content:
+                message.content,
+
+              date:
+                message.date,
+
+              type:
+                message.idSender ===
+                currentUserId
+
+                  ? 'sent'
+                  : 'received'
+
+            })
+          )
+
+    }
 
 
     // ----------------------------------------
-    // Atualiza lista
+    // RENDERIZA
     // ----------------------------------------
 
     renderContacts()
 
 
     // ----------------------------------------
-    // Seleciona automaticamente
+    // SELECIONA
     // ----------------------------------------
 
     selectConversation(
@@ -725,17 +1027,14 @@ async function createNewChat() {
 
 
     // ----------------------------------------
-    // Fecha formulário
+    // FECHA
     // ----------------------------------------
 
     closeNewChatForm()
 
 
-    // ----------------------------------------
-    // Limpa input
-    // ----------------------------------------
-
-    usernameInput.value = ''
+    usernameInput.value =
+      ''
 
 
   } catch (error) {
@@ -825,7 +1124,8 @@ searchInput.addEventListener(
         contact => {
 
           const conversationId =
-            contact.dataset.conversationId
+            contact.dataset
+              .conversationId
 
 
           const conversation =
@@ -835,17 +1135,21 @@ searchInput.addEventListener(
 
 
           if (!conversation) {
+
             return
+
           }
 
 
-          const username =
-            conversation.user.name
+          const name =
+            getConversationName(
+              conversation
+            )
               .toLowerCase()
 
 
           contact.style.display =
-            username.includes(search)
+            name.includes(search)
               ? 'flex'
               : 'none'
 
@@ -865,10 +1169,6 @@ socket.on(
   data => {
 
 
-    // ----------------------------------------
-    // Chat ID
-    // ----------------------------------------
-
     const chatId =
       data.chatId
 
@@ -885,14 +1185,10 @@ socket.on(
     }
 
 
-    // ----------------------------------------
-    // Verifica remetente
-    // ----------------------------------------
-
     if (!data.sender) {
 
       console.warn(
-        'Mensagem sem remetente:',
+        'Mensagem sem sender:',
         data
       )
 
@@ -902,7 +1198,7 @@ socket.on(
 
 
     // ========================================
-    // CRIA CONVERSA CASO NÃO EXISTA
+    // CRIA CHAT SE NÃO EXISTIR
     // ========================================
 
     if (
@@ -914,18 +1210,36 @@ socket.on(
         id:
           chatId,
 
-        user: {
+        type:
+          'private',
 
-          id:
-            data.sender.id,
+        users: [
 
-          name:
-            data.sender.name,
+          {
+            id:
+              currentUserId,
 
-          online:
-            data.sender.online ?? true
+            name:
+              'Você',
 
-        },
+            online:
+              true
+
+          },
+
+          {
+            id:
+              data.sender.id,
+
+            name:
+              data.sender.name,
+
+            online:
+              data.sender.online ?? true
+
+          }
+
+        ],
 
         messages: []
 
@@ -934,18 +1248,51 @@ socket.on(
     }
 
 
-    // ========================================
-    // EVITA DUPLICAR MENSAGEM
-    // ========================================
-
     const conversation =
-      conversations[chatId]
+      conversations[
+        chatId
+      ]
 
+
+    // ========================================
+    // GARANTE O REMETENTE
+    // ========================================
+
+    const senderExists =
+      conversation.users.some(
+        user =>
+          user.id ===
+          data.sender.id
+      )
+
+
+    if (!senderExists) {
+
+      conversation.users.push({
+
+        id:
+          data.sender.id,
+
+        name:
+          data.sender.name,
+
+        online:
+          data.sender.online ?? true
+
+      })
+
+    }
+
+
+    // ========================================
+    // EVITA DUPLICAÇÃO
+    // ========================================
 
     const alreadyExists =
       conversation.messages.some(
         message =>
-          message.id === data.id
+          message.id ===
+          data.id
       )
 
 
@@ -957,13 +1304,16 @@ socket.on(
 
 
     // ========================================
-    // CRIA MENSAGEM
+    // ADICIONA MENSAGEM
     // ========================================
 
-    const message = {
+    conversation.messages.push({
 
       id:
         data.id,
+
+      senderId:
+        data.sender.id,
 
       content:
         data.message,
@@ -972,27 +1322,24 @@ socket.on(
         data.date,
 
       type:
-        data.sender.id === currentUserId
+        data.sender.id ===
+        currentUserId
+
           ? 'sent'
           : 'received'
 
-    }
-
-
-    conversation.messages.push(
-      message
-    )
+    })
 
 
     // ========================================
-    // ATUALIZA SIDEBAR
+    // SIDEBAR
     // ========================================
 
     renderContacts()
 
 
     // ========================================
-    // ATUALIZA CHAT ABERTO
+    // CHAT ABERTO
     // ========================================
 
     if (
@@ -1003,8 +1350,6 @@ socket.on(
       renderMessages(
         chatId
       )
-
-      scrollMessages()
 
     }
 
@@ -1023,7 +1368,7 @@ socket.on(
 
 
 // ========================================
-// ERRO DE AUTENTICAÇÃO
+// ERRO SOCKET
 // ========================================
 
 socket.on(
@@ -1089,7 +1434,7 @@ function getInitials(
 
 
 // ========================================
-// FORMATAR DATA
+// DATA DA MENSAGEM
 // ========================================
 
 function formatMessageDate(
@@ -1097,7 +1442,9 @@ function formatMessageDate(
 ) {
 
   if (!date) {
+
     return ''
+
   }
 
 
@@ -1148,7 +1495,7 @@ function scrollMessages() {
 
 
 // ========================================
-// ESCAPAR HTML
+// ESCAPE HTML
 // ========================================
 
 function escapeHTML(
@@ -1169,7 +1516,7 @@ function escapeHTML(
 
 
 // ========================================
-// INICIAR APLICAÇÃO
+// INICIA
 // ========================================
 
 initializeChat()

@@ -86,4 +86,67 @@ export class ChatRepositorySequelize implements ChatRepository {
     
     return null
   }
+
+  async findByUser(userId: string): Promise<Chat[] | null> {
+    const userChats = await ChatUserModel.findAll({
+      where: {
+        idUser: userId
+      }
+    })
+
+    return await Promise.all(
+      userChats.map(async (userChat) => {
+       const chatModel = await ChatModel.findByPk(userChat.idChat)
+       
+       if (!chatModel) {
+         throw new NotFoundError(`Chat with id ${userChat.idChat} not found`)
+       }
+       
+       const chatUsersModel = await ChatUserModel.findAll({
+         where: {
+           idChat: userChat.idChat
+         }
+       })
+ 
+       const users = await Promise.all(
+         chatUsersModel.map(async (chatUser) => {
+           const userModel = await UserModel.findByPk(chatUser.idUser)
+           
+           if (!userModel) {
+             throw new NotFoundError(`User with id ${chatUser.idUser} not found`)
+           }
+ 
+           return new User(
+             userModel.id,
+             userModel.name,
+             userModel.password
+           )
+         })
+       )
+ 
+       const messagesModel = await MessageModel.findAll({
+         where: {
+           idChat: chatModel.id
+         }
+       }) 
+ 
+       const messages = messagesModel.map((message) => {
+         return new Message(
+           message.id,
+           message.idChat,
+           message.idSender,
+           message.content,
+           message.date
+         )
+       })
+       
+       return new Chat(
+         chatModel.id,
+         chatModel.type,
+         users,
+         messages
+       )
+     })
+    )
+  }
 }
