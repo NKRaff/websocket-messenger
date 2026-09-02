@@ -52,6 +52,10 @@ const searchInput =
   document.querySelector('#search-input')
 
 
+const logoutButton =
+  document.querySelector('#logout-button')
+
+
 // ========================================
 // ESTADO
 // ========================================
@@ -1513,6 +1517,28 @@ function escapeHTML(
   return element.innerHTML
 
 }
+
+
+// ========================================
+// LOGOUT
+// ========================================
+
+function logout() {
+  console.log('chamou logout')
+  window.location.href =
+    'http://localhost:3000/user/logout'
+
+}
+
+
+// ========================================
+// BOTÃO LOGOUT
+// ========================================
+
+logoutButton.addEventListener(
+  'click',
+  logout
+)
 
 
 // ========================================

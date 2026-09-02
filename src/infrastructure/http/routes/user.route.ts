@@ -59,6 +59,17 @@ export class UserRoute {
         next(error)
       }
     })
+
+    this.routes.get('/logout', httpAuth, (req, res, next) => {
+      try {
+        return res
+          .clearCookie("access_token")
+          .status(300)
+          .redirect('/')
+      } catch (error) {
+        next(error)
+      }
+    })
   }
 
   getRoutes() {

@@ -60,6 +60,49 @@ body {
   font-weight: bold;
 }
 
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid #293244;
+}
+
+.logout-button {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  padding: 11px 14px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: transparent;
+  color: #fca5a5;
+
+  font-size: 14px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.logout-button:hover {
+  background: #3f1d1d;
+  color: #f87171;
+}
+
+.logout-icon {
+  font-size: 20px;
+}
+
+.logout-text {
+  font-size: 14px;
+}
+
 
 /* NOVO CHAT */
 
@@ -542,5 +585,21 @@ body {
 
   .messages {
     padding: 15px;
+  }
+
+  .sidebar-footer {
+    padding: 10px 5px;
+  }
+
+  .logout-button {
+    padding: 10px 5px;
+  }
+
+  .logout-text {
+    display: none;
+  }
+
+  .logout-icon {
+    font-size: 20px;
   }
 }
